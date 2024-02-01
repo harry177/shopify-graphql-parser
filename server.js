@@ -3,6 +3,36 @@ const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 const http = require("http");
+const { graphqlHTTP } = require('express-graphql');
+const { buildSchema } = require('graphql');
+
+const schema = buildSchema(`
+  type Product {
+    id: Float
+    bodyHtml: String
+    image: String
+  }
+
+  type Query {
+    products: [Product]
+  }
+`);
+
+const root = {
+  products: async () => {
+    return new Promise((resolve, reject) => {
+      const db = new sqlite3.Database('mydatabase.db');
+      db.all('SELECT * FROM products', (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+      db.close();
+    });
+  },
+};
 
 const app = express();
 
@@ -29,6 +59,12 @@ const port = 3001;
 
 app.use(express.json());
 
+app.use('/graphql', graphqlHTTP({
+  schema: schema,
+  rootValue: root,
+  graphiql: true, // Включает интерактивную консоль GraphiQL для отладки запросов
+}));
+
 async function fetchDataFromAPI() {
   try {
     const shopifyUrl = "https://cpb-new-developer.myshopify.com/";
@@ -45,39 +81,38 @@ async function fetchDataFromAPI() {
 
     if (response.ok) {
       const data = await response.json();
-
+    
       const dbFile = "mydatabase.db";
       const dbFileExists = fs.existsSync(dbFile);
-
+    
       if (!dbFileExists) {
         const db = new sqlite3.Database(dbFile);
         db.run(`CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY,
-            productData TEXT
+            bodyHtml TEXT,
+            image TEXT
           )`);
         db.close();
       }
-
+    
       const db = new sqlite3.Database(dbFile);
       for (const product of data.products) {
-        const { id } = product;
+        const { id, body_html, image } = product;
         const query =
-          "INSERT OR REPLACE INTO products (id, productData) VALUES (?, ?)";
-        const params = [id, JSON.stringify(product)];
+          "INSERT OR REPLACE INTO products (id, bodyHtml, image) VALUES (?, ?, ?)";
+        const params = [id, body_html, image.src];
         db.run(query, params);
       }
       db.close();
-
-      
+    
       io.on("connection", (socket) => {
         io.emit("databaseUpdated", {
-            data,
-          });
-          socket.on('disconnect', () => {
-            console.log('user disconnected');
-          });
+          message: "START",
+        });
+        socket.on('disconnect', () => {
+          console.log('user disconnected');
+        });
       });
-      
     } else {
       console.error("Request failed with status", response.status);
     }
