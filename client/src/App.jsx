@@ -103,6 +103,7 @@ function App() {
   }
 
   if (data) {
+    console.log(data)
     return (
       <div>
         <h2>Product List</h2>

@@ -3,8 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 const http = require("http");
-const { graphqlHTTP } = require('express-graphql');
-const { buildSchema } = require('graphql');
+const { graphqlHTTP } = require("express-graphql");
+const { buildSchema } = require("graphql");
 
 const schema = buildSchema(`
   type Product {
@@ -21,8 +21,8 @@ const schema = buildSchema(`
 const root = {
   products: async () => {
     return new Promise((resolve, reject) => {
-      const db = new sqlite3.Database('mydatabase.db');
-      db.all('SELECT * FROM products', (err, rows) => {
+      const db = new sqlite3.Database("mydatabase.db");
+      db.all("SELECT * FROM products", (err, rows) => {
         if (err) {
           reject(err);
         } else {
@@ -59,11 +59,30 @@ const port = 3001;
 
 app.use(express.json());
 
-app.use('/graphql', graphqlHTTP({
-  schema: schema,
-  rootValue: root,
-  graphiql: true, // Включает интерактивную консоль GraphiQL для отладки запросов
-}));
+app.use(
+  "/graphql",
+  graphqlHTTP({
+    schema: schema,
+    rootValue: root,
+    graphiql: true,
+  })
+);
+
+const query = `
+  query {
+    products(first: 10) {
+        nodes {
+          id
+          bodyHtml
+          images(first: 1) {
+              nodes {
+                src
+              }
+          }
+        }
+    }
+  }
+`;
 
 async function fetchDataFromAPI() {
   try {
@@ -71,20 +90,23 @@ async function fetchDataFromAPI() {
     const accessToken = "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";
 
     const response = await fetch(
-      `${shopifyUrl}/admin/api/2024-01/products.json`,
+      `${shopifyUrl}/admin/api/2024-01/graphql.json`,
       {
+        method: "POST",
         headers: {
           "X-Shopify-Access-Token": accessToken,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ query }),
       }
     );
 
     if (response.ok) {
-      const data = await response.json();
-    
+      const { data } = await response.json();
+
       const dbFile = "mydatabase.db";
       const dbFileExists = fs.existsSync(dbFile);
-    
+
       if (!dbFileExists) {
         const db = new sqlite3.Database(dbFile);
         db.run(`CREATE TABLE IF NOT EXISTS products (
@@ -94,23 +116,24 @@ async function fetchDataFromAPI() {
           )`);
         db.close();
       }
-    
+
       const db = new sqlite3.Database(dbFile);
-      for (const product of data.products) {
-        const { id, body_html, image } = product;
+      for (const product of data.products.nodes) {
+        const { id, bodyHtml, images } = product;
         const query =
           "INSERT OR REPLACE INTO products (id, bodyHtml, image) VALUES (?, ?, ?)";
-        const params = [id, body_html, image.src];
+        const params = [id.replace(/\D/g, ''), bodyHtml, images.nodes[0].src];
+        
         db.run(query, params);
       }
       db.close();
-    
+
       io.on("connection", (socket) => {
         io.emit("databaseUpdated", {
           message: "START",
         });
-        socket.on('disconnect', () => {
-          console.log('user disconnected');
+        socket.on("disconnect", () => {
+          console.log("user disconnected");
         });
       });
     } else {
