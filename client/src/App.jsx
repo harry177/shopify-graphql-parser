@@ -68,37 +68,6 @@ function App() {
     image.src = imageSrc;
   }
 
-  const gridContainerStyles = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gridGap: "20px",
-  };
-
-  const containerStyles = {
-    width: "100%",
-    height: "20vw",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "black 1px solid",
-  };
-
-  const gridItemStyles = {
-    border: "1px solid #ccc",
-    padding: "10px",
-    textAlign: "center",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-between",
-  };
-
-  const canvasStyles = {
-    width: "100%",
-    height: "100%",
-    objectFit: "contain",
-  };
-
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -119,16 +88,16 @@ function App() {
     return (
       <div>
         <h2>Product List</h2>
-        <div style={gridContainerStyles}>
+        <div className="grid-container">
           {products.map((product) => (
-            <div key={product.id} style={gridItemStyles}>
-              <div style={containerStyles}>
+            <div key={product.id} className="item-container">
+              <div className="image-container">
                 <canvas
                   ref={(canvas) => drawImageOnCanvas(canvas, product.image)}
-                  style={canvasStyles}
+                  className="canvas"
                 ></canvas>
               </div>
-              <p dangerouslySetInnerHTML={createMarkup(product.bodyHtml)} />
+              <p className="product-description" dangerouslySetInnerHTML={createMarkup(product.bodyHtml)} />
             </div>
           ))}
         </div>
