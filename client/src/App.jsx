@@ -1,11 +1,12 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { socket } from "./socket";
 import { setProducts } from "./store/productSlice";
 import { useLazyQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import "./App.css";
 import Header from "./Header";
+import ImagePopup from "./ImagePopup";
+import "./App.css";
 
 const GET_PRODUCTS = gql`
   {
@@ -26,12 +27,13 @@ function App() {
   const products = useSelector((state) => state.products);
 
   const [getProducts, { loading, error, data }] = useLazyQuery(GET_PRODUCTS);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     if (data) {
       dispatch(setProducts(data.products));
     }
-  }, [data]);
+  }, [data, dispatch]);
 
   useEffect(() => {
     socket.on("databaseUpdated", (data) => {
@@ -41,9 +43,19 @@ function App() {
     return () => {
       socket.off("databaseUpdated");
     };
-  }, []);
+  }, [getProducts]);
+
+  const handleImageClick = (image) => {
+    setSelectedImage(image);
+  };
+
+  const closePopup = () => {
+    setSelectedImage(null);
+  };
 
   function drawImageOnCanvas(canvas, imageSrc) {
+    if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     const image = new Image();
 
@@ -78,34 +90,39 @@ function App() {
   }
 
   if (!data) {
-    return <></>;
+    return null;
   }
 
   if (products.length === 0) {
     return <p>No products found.</p>;
   }
 
-  if (products) {
-    return (
-      <div>
-        <Header />
-        <h2>Product List</h2>
-        <div className="grid-container">
-          {products.map((product) => (
-            <div key={product.id} className="item-container">
-              <div className="image-container">
-                <canvas
-                  ref={(canvas) => drawImageOnCanvas(canvas, product.image)}
-                  className="canvas"
-                ></canvas>
-              </div>
-              <p className="product-description" dangerouslySetInnerHTML={createMarkup(product.bodyHtml)} />
+  return (
+    <div>
+      <Header />
+      <h2>Product List</h2>
+      <div className="grid-container">
+        {products.map((product) => (
+          <div key={product.id} className="item-container">
+            <div className="image-container">
+              <canvas
+                onClick={() => handleImageClick(product.image)}
+                ref={(canvas) => drawImageOnCanvas(canvas, product.image)}
+                className="canvas"
+              ></canvas>
             </div>
-          ))}
-        </div>
+            <p
+              className="product-description"
+              dangerouslySetInnerHTML={createMarkup(product.bodyHtml)}
+            />
+          </div>
+        ))}
       </div>
-    );
-  }
+      {selectedImage && (
+        <ImagePopup image={selectedImage} onClose={closePopup} />
+      )}
+    </div>
+  );
 }
 
 export default App;
