@@ -5,6 +5,7 @@ import { setProducts } from "./store/productSlice";
 import { useLazyQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import "./App.css";
+import Header from "./Header";
 
 const GET_PRODUCTS = gql`
   {
@@ -87,6 +88,7 @@ function App() {
   if (products) {
     return (
       <div>
+        <Header />
         <h2>Product List</h2>
         <div className="grid-container">
           {products.map((product) => (
