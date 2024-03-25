@@ -1,6 +1,10 @@
-# Buildateam test task - Junior Full-stack Developer CPB
+# Shopify GraphQL Parser - full-stack Shopify shop parser
 
-This is a test project created for application to Junior Full-stack Developer position in Buildateam.
+This application allows you to display products from your Shopify store using the Shopify API. 
+Supports: 
+- adaptive display of products on different screens 
+- displaying images via canvas 
+- saving data in the local database and global store
 
 ## Installation
 
@@ -16,7 +20,7 @@ This is a test project created for application to Junior Full-stack Developer po
 
 ## Used technologies
 
-1. GraphQL api for client an server requests
+1. GraphQL + Shopify api for client an server requests
 2. ExpressJS
 3. Socket.IO for client notification
 4. Redux for store management

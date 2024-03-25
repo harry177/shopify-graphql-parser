@@ -1,17 +1,23 @@
 .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-    background-color: #197de0;
-  }
-  
-  .logo img {
-    height: 50px;
-  }
-  
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #3ea1c2;
+}
+
+.logo img {
+  height: 50px;
+}
+
+.slogan-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+@media (max-width: 930px) {
   .slogan-text {
-    font-size: 24px;
-    font-weight: bold;
-    color: #ffffff;
+    font-size: 18px;
   }
+}
